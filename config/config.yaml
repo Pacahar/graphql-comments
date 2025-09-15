@@ -1,0 +1,10 @@
+environment: "local" # local, dev, production
+http_server:
+  address: "127.0.0.1"
+  port: 4000
+database:
+  host: "127.0.0.1"
+  port: 5432
+  username: "postgres"
+  password: "postgres"
+  DBName: "comments"
