@@ -12,11 +12,11 @@ import (
 	"github.com/Pacahar/graphql-comments/internal/models"
 )
 
-type CommentStorage struct {
+type PostgresCommentStorage struct {
 	db *sql.DB
 }
 
-func NewPostgresCommentStorage(db *sql.DB) (*CommentStorage, error) {
+func NewPostgresCommentStorage(db *sql.DB) (*PostgresCommentStorage, error) {
 	const op = "storage.postgres.NewPostgresCommentStorage"
 
 	_, err := db.Exec(`
@@ -38,10 +38,10 @@ func NewPostgresCommentStorage(db *sql.DB) (*CommentStorage, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return &CommentStorage{db: db}, nil
+	return &PostgresCommentStorage{db: db}, nil
 }
 
-func (cs *CommentStorage) CreateComment(ctx context.Context, content string, postID int64, parentID *int64) error {
+func (cs *PostgresCommentStorage) CreateComment(ctx context.Context, content string, postID int64, parentID *int64) error {
 	const op = "storage.postgres.comment.CreateComment"
 
 	var err error
@@ -58,7 +58,7 @@ func (cs *CommentStorage) CreateComment(ctx context.Context, content string, pos
 	return nil
 }
 
-func (cs *CommentStorage) GetCommentByID(ctx context.Context, id int64) (*models.Comment, error) {
+func (cs *PostgresCommentStorage) GetCommentByID(ctx context.Context, id int64) (*models.Comment, error) {
 	const op = "storage.postgres.comment.GetCommentByID"
 
 	comment := models.Comment{}
@@ -88,7 +88,7 @@ func (cs *CommentStorage) GetCommentByID(ctx context.Context, id int64) (*models
 	return &comment, nil
 }
 
-func (cs *CommentStorage) GetCommentsByPostID(ctx context.Context, postID int64) ([]models.Comment, error) {
+func (cs *PostgresCommentStorage) GetCommentsByPostID(ctx context.Context, postID int64) ([]models.Comment, error) {
 	const op = "storage.postgres.comment.GetCommentsByPostID"
 
 	rows, err := cs.db.QueryContext(ctx, `
@@ -131,7 +131,7 @@ func (cs *CommentStorage) GetCommentsByPostID(ctx context.Context, postID int64)
 	return comments, nil
 }
 
-func (cs *CommentStorage) DeleteComment(ctx context.Context, id int64) error {
+func (cs *PostgresCommentStorage) DeleteComment(ctx context.Context, id int64) error {
 	const op = "storage.postgres.comment.DeleteComment"
 
 	_, err := cs.db.ExecContext(ctx, `
