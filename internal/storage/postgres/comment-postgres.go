@@ -24,7 +24,7 @@ func NewPostgresCommentStorage(db *sql.DB) (*CommentStorage, error) {
 			id SERIAL PRIMARY KEY,
 			post_id INTEGER NOT NULL,
 			parent_id INTEGER NULL,
-			content VARCHAR(2047) NOT NULL,
+			content TEXT NOT NULL,
 			created_at TIMESTAMP DEFAULT NOW() NOT NULL,
 			FOREIGN KEY (post_id) REFERENCES post(id) ON DELETE CASCADE,
 			FOREIGN KEY (parent_id) REFERENCES comment(id) ON DELETE CASCADE
