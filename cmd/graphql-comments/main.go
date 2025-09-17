@@ -30,7 +30,6 @@ func main() {
 
 	log.Info("storage set", slog.String("storage type", cfg.Storage.Type))
 
-	// TODO: ALL THE
 }
 
 func setupLogger(env string) *slog.Logger {
