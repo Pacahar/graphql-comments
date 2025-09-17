@@ -1,13 +1,12 @@
 package memory
 
-import "fmt"
+import (
+	"fmt"
 
-type MemoryStorage struct {
-	postStorage    *PostMemoryStorage
-	commentStorage *CommentMemoryStorage
-}
+	"github.com/Pacahar/graphql-comments/internal/storage"
+)
 
-func NewMemoryStorage() (*MemoryStorage, error) {
+func NewMemoryStorage() (*storage.Storage, error) {
 	const op = "storage.memory.NewMemoryStorage"
 
 	postStorage, err := NewPostMemoryStorage()
@@ -22,8 +21,8 @@ func NewMemoryStorage() (*MemoryStorage, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return &MemoryStorage{
-		postStorage:    postStorage,
-		commentStorage: commentStorage,
+	return &storage.Storage{
+		Post:    postStorage,
+		Comment: commentStorage,
 	}, nil
 }

@@ -3,17 +3,14 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/Pacahar/graphql-comments/internal/storage"
 )
 
-type PostgresStorage struct {
-	postStorage    *PostPostgresStorage
-	commentStorage *CommentPostgresStorage
-}
-
-func NewPostgresStorage(storagePath string) (*PostgresStorage, error) {
+func NewPostgresStorage(dsn string) (*storage.Storage, error) {
 	const op = "storage.postgres.NewPostgresStorage"
 
-	db, err := sql.Open("postgres", storagePath)
+	db, err := sql.Open("postgres", dsn)
 
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -29,8 +26,8 @@ func NewPostgresStorage(storagePath string) (*PostgresStorage, error) {
 		return nil, err
 	}
 
-	return &PostgresStorage{
-		postStorage:    PostgresPostStorage,
-		commentStorage: PostgresCommentStorage,
+	return &storage.Storage{
+		Post:    PostgresPostStorage,
+		Comment: PostgresCommentStorage,
 	}, nil
 }
