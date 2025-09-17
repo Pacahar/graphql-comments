@@ -10,14 +10,19 @@ import (
 )
 
 type Config struct {
-	Environment string `yaml:"environment" env-required:"true"`
-	HTTPServer  `yaml:"http_server"`
-	DB          `yaml:"database"`
+	Environment string     `yaml:"environment" env-required:"true"` // local, dev, production
+	HTTPServer  HTTPServer `yaml:"http_server"`
+	Storage     Storage    `yaml:"storage"`
 }
 
 type HTTPServer struct {
 	Address string `yaml:"address" env-default:"0.0.0.0"`
 	Port    int    `yaml:"port" env-default:"4000"`
+}
+
+type Storage struct {
+	Type     string `yaml:"type" env-required:"true"` // memory, postgres
+	Postgres *DB    `yaml:"postgres,omitempty"`
 }
 
 type DB struct {
