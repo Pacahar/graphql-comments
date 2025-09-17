@@ -10,11 +10,11 @@ import (
 	storageErrors "github.com/Pacahar/graphql-comments/internal/storage/errors"
 )
 
-type PostgresPostStorage struct {
+type PostPostgresStorage struct {
 	db *sql.DB
 }
 
-func NewPostgresPostStorage(db *sql.DB) (*PostgresPostStorage, error) {
+func NewPostgresPostStorage(db *sql.DB) (*PostPostgresStorage, error) {
 	const op = "storage.postgres.NewPostgresPostStorage"
 
 	_, err := db.Exec(`
@@ -32,10 +32,10 @@ func NewPostgresPostStorage(db *sql.DB) (*PostgresPostStorage, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return &PostgresPostStorage{db: db}, nil
+	return &PostPostgresStorage{db: db}, nil
 }
 
-func (ps *PostgresPostStorage) CreatePost(ctx context.Context, title, content string, comments_disabled bool) error {
+func (ps *PostPostgresStorage) CreatePost(ctx context.Context, title, content string, commentsDisabled bool) error {
 	const op = "storage.postgres.post.CreatePost"
 
 	_, err := ps.db.ExecContext(ctx, `
@@ -43,7 +43,7 @@ func (ps *PostgresPostStorage) CreatePost(ctx context.Context, title, content st
 		VALUES($1, $2, $3)`,
 		title,
 		content,
-		comments_disabled,
+		commentsDisabled,
 	)
 
 	if err != nil {
@@ -53,7 +53,7 @@ func (ps *PostgresPostStorage) CreatePost(ctx context.Context, title, content st
 	return nil
 }
 
-func (ps *PostgresPostStorage) GetPostByID(ctx context.Context, id int64) (*models.Post, error) {
+func (ps *PostPostgresStorage) GetPostByID(ctx context.Context, id int64) (models.Post, error) {
 	const op = "storage.postgres.post.GetPostByID"
 
 	post := models.Post{}
@@ -75,15 +75,15 @@ func (ps *PostgresPostStorage) GetPostByID(ctx context.Context, id int64) (*mode
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, storageErrors.ErrPostNotFound
+			return models.Post{}, storageErrors.ErrPostNotFound
 		}
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return models.Post{}, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return &post, nil
+	return post, nil
 }
 
-func (ps *PostgresPostStorage) DeletePost(ctx context.Context, id int64) error {
+func (ps *PostPostgresStorage) DeletePost(ctx context.Context, id int64) error {
 	const op = "storage.postgres.post.DeletePost"
 
 	_, err := ps.db.ExecContext(ctx, `
