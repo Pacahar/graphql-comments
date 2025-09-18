@@ -74,15 +74,14 @@ func (cs *CommentMemoryStorage) GetCommentByID(ctx context.Context, id int64) (m
 	return copy, nil
 }
 
-func (cs *CommentMemoryStorage) GetCommentsByPostID(ctx context.Context, postID int64) ([]models.Comment, error) {
+func (cs *CommentMemoryStorage) GetCommentsByPostID(ctx context.Context, postID int64, limit *int64, offset *int64) ([]models.Comment, error) {
 	cs.mu.RLock()
 	defer cs.mu.RUnlock()
 
-	resultComments := make([]models.Comment, 0)
+	filtered := make([]models.Comment, 0)
 
 	for _, comment := range cs.comments {
 		if comment.PostID == postID {
-
 			var parentID *int64
 			if comment.ParentID != nil {
 				val := *comment.ParentID
@@ -97,11 +96,21 @@ func (cs *CommentMemoryStorage) GetCommentsByPostID(ctx context.Context, postID 
 				CreatedAt: comment.CreatedAt,
 			}
 
-			resultComments = append(resultComments, copy)
+			filtered = append(filtered, copy)
 		}
 	}
 
-	return resultComments, nil
+	start := int64(0)
+	if offset != nil && *offset >= 0 && *offset < int64(len(filtered)) {
+		start = *offset
+	}
+
+	end := int64(len(filtered))
+	if limit != nil && (start+*limit) < end {
+		end = start + *limit
+	}
+
+	return filtered[start:end], nil
 }
 
 func (cs *CommentMemoryStorage) DeleteComment(ctx context.Context, id int64) error {

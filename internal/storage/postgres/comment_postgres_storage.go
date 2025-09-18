@@ -89,22 +89,34 @@ func (cs *CommentPostgresStorage) GetCommentByID(ctx context.Context, id int64) 
 	return comment, nil
 }
 
-func (cs *CommentPostgresStorage) GetCommentsByPostID(ctx context.Context, postID int64) ([]models.Comment, error) {
+func (cs *CommentPostgresStorage) GetCommentsByPostID(ctx context.Context, postID int64, limit *int64, offset *int64) ([]models.Comment, error) {
 	const op = "storage.postgres.comment.GetCommentsByPostID"
 
-	rows, err := cs.db.QueryContext(ctx, `
+	var rows *sql.Rows
+	var err error
+
+	if limit != nil && offset != nil {
+		rows, err = cs.db.QueryContext(ctx, `
 		SELECT id, post_id, parent_id, content, created_at
 		FROM comment
-		WHERE post_id=$1
-		ORDER BY created_at ASC`,
-		postID,
-	)
+		WHERE post_id = $1
+		ORDER BY created_at ASC
+		LIMIT $1
+		OFFSET $2
+	`, limit, offset)
+	} else {
+		rows, err = cs.db.QueryContext(ctx, `
+		SELECT id, post_id, parent_id, content, created_at
+		FROM comment
+		WHERE post_id = $1
+		ORDER BY created_at ASC`)
+	}
+
+	defer rows.Close()
 
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-
-	defer rows.Close()
 
 	comments := make([]models.Comment, 0)
 
@@ -117,7 +129,6 @@ func (cs *CommentPostgresStorage) GetCommentsByPostID(ctx context.Context, postI
 			&comment.Content,
 			&comment.CreatedAt,
 		)
-
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}

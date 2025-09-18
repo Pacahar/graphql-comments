@@ -21,7 +21,7 @@ type PostStorage interface {
 type CommentStorage interface {
 	CreateComment(ctx context.Context, content string, postID int64, parentID *int64) (int64, error)
 	GetCommentByID(ctx context.Context, id int64) (models.Comment, error)
-	GetCommentsByPostID(ctx context.Context, postID int64) ([]models.Comment, error)
+	GetCommentsByPostID(ctx context.Context, postID int64, limit *int64, offset *int64) ([]models.Comment, error)
 	DeleteComment(ctx context.Context, id int64) error
 	DeleteCommentsByPostID(ctx context.Context, id int64) error
 }
