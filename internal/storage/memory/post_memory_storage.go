@@ -15,6 +15,14 @@ type PostMemoryStorage struct {
 	currentID int64
 }
 
+func NewPostMemoryStorage() (*PostMemoryStorage, error) {
+	return &PostMemoryStorage{
+		mu:        sync.RWMutex{},
+		posts:     make(map[int64]models.Post),
+		currentID: 1,
+	}, nil
+}
+
 func (ps *PostMemoryStorage) CreatePost(ctx context.Context, title, content string, commentsDisabled bool) (int64, error) {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
@@ -62,19 +70,11 @@ func (ps *PostMemoryStorage) DeletePost(ctx context.Context, id int64) error {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
-	if _, exists := ps.posts[id]; !exists {
-		return storageErrors.ErrPostNotFound
-	}
+	// if _, exists := ps.posts[id]; !exists {
+	// 	return storageErrors.ErrPostNotFound
+	// }
 
 	delete(ps.posts, id)
 
 	return nil
-}
-
-func NewPostMemoryStorage() (*PostMemoryStorage, error) {
-	return &PostMemoryStorage{
-		mu:        sync.RWMutex{},
-		posts:     make(map[int64]models.Post),
-		currentID: 1,
-	}, nil
 }

@@ -147,3 +147,19 @@ func (cs *CommentPostgresStorage) DeleteComment(ctx context.Context, id int64) e
 
 	return nil
 }
+
+func (cs *CommentPostgresStorage) DeleteCommentsByPostID(ctx context.Context, postID int64) error {
+	const op = "storage.postgres.comment.DeleteCommentsByPostID"
+
+	_, err := cs.db.ExecContext(ctx, `
+		DELETE FROM comment
+		WHERE post_id=$1`,
+		postID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}

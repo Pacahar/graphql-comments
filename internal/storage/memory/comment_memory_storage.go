@@ -15,6 +15,14 @@ type CommentMemoryStorage struct {
 	currentID int64
 }
 
+func NewCommentMemoryStorage() (*CommentMemoryStorage, error) {
+	return &CommentMemoryStorage{
+		mu:        sync.RWMutex{},
+		comments:  make(map[int64]models.Comment),
+		currentID: 1,
+	}, nil
+}
+
 func (cs *CommentMemoryStorage) CreateComment(ctx context.Context, content string, postID int64, parentID *int64) (int64, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -100,19 +108,32 @@ func (cs *CommentMemoryStorage) DeleteComment(ctx context.Context, id int64) err
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
-	if _, exists := cs.comments[id]; !exists {
-		return storageErrors.ErrCommentNotFound
+	var deleteRecursive func(commentID int64)
+
+	deleteRecursive = func(commentID int64) {
+		for childID, comment := range cs.comments {
+
+			if comment.ParentID != nil && *comment.ParentID == commentID {
+				deleteRecursive(childID)
+			}
+		}
+		delete(cs.comments, commentID)
 	}
 
-	delete(cs.comments, id)
+	deleteRecursive(id)
 
 	return nil
 }
 
-func NewCommentMemoryStorage() (*CommentMemoryStorage, error) {
-	return &CommentMemoryStorage{
-		mu:        sync.RWMutex{},
-		comments:  make(map[int64]models.Comment),
-		currentID: 1,
-	}, nil
+func (cs *CommentMemoryStorage) DeleteCommentsByPostID(ctx context.Context, postID int64) error {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	for id, comment := range cs.comments {
+		if comment.PostID == postID {
+			delete(cs.comments, id)
+		}
+	}
+
+	return nil
 }
