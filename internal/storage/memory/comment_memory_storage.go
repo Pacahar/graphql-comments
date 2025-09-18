@@ -103,7 +103,7 @@ func (cs *CommentMemoryStorage) GetCommentsByParentID(ctx context.Context, Paren
 	return filtered, nil
 }
 
-func (cs *CommentMemoryStorage) GetCommentsByPostID(ctx context.Context, postID int64, limit *int64, offset *int64) ([]models.Comment, error) {
+func (cs *CommentMemoryStorage) GetCommentsByPostID(ctx context.Context, postID int64, limit *int32, offset *int32) ([]models.Comment, error) {
 	cs.mu.RLock()
 	defer cs.mu.RUnlock()
 
@@ -129,12 +129,12 @@ func (cs *CommentMemoryStorage) GetCommentsByPostID(ctx context.Context, postID 
 		}
 	}
 
-	start := int64(0)
-	if offset != nil && *offset >= 0 && *offset < int64(len(filtered)) {
+	start := int32(0)
+	if offset != nil && *offset >= 0 && *offset < int32(len(filtered)) {
 		start = *offset
 	}
 
-	end := int64(len(filtered))
+	end := int32(len(filtered))
 	if limit != nil && (start+*limit) < end {
 		end = start + *limit
 	}

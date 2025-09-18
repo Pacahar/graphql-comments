@@ -3,13 +3,19 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/Pacahar/graphql-comments/internal/config"
 	"github.com/Pacahar/graphql-comments/internal/constants"
+	"github.com/Pacahar/graphql-comments/internal/graphql"
+	"github.com/Pacahar/graphql-comments/internal/graphql/generated"
 	"github.com/Pacahar/graphql-comments/internal/storage"
 	"github.com/Pacahar/graphql-comments/internal/storage/memory"
 	"github.com/Pacahar/graphql-comments/internal/storage/postgres"
+
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
 )
 
 func main() {
@@ -21,7 +27,7 @@ func main() {
 	log.Info("Starting service", slog.String("env", cfg.Environment))
 	log.Debug("Debug messages enabled")
 
-	_, err := setupStorage(&cfg.Storage)
+	storage, err := setupStorage(&cfg.Storage)
 
 	if err != nil {
 		log.Error("failed to setup storage", slog.Any("error", err))
@@ -29,7 +35,27 @@ func main() {
 	}
 
 	log.Info("storage set", slog.String("storage type", cfg.Storage.Type))
-	// TODO: ALL THE REST
+
+	resolver := &graphql.Resolver{
+		Storage: storage,
+		Logger:  log,
+	}
+
+	srv := handler.NewDefaultServer(
+		generated.NewExecutableSchema(generated.Config{Resolvers: resolver}),
+	)
+
+	http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
+
+	http.Handle("/query", srv)
+
+	address := fmt.Sprintf(":%d", cfg.HTTPServer.Port)
+	log.Info("Starting GraphQL server", slog.Int("addr", cfg.HTTPServer.Port))
+
+	if err := http.ListenAndServe(address, nil); err != nil {
+		log.Error("failed to start server", slog.Any("error", err))
+		os.Exit(1)
+	}
 }
 
 func setupLogger(env string) *slog.Logger {

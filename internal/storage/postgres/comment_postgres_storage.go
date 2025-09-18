@@ -131,7 +131,7 @@ func (cs *CommentPostgresStorage) GetCommentsByParentID(ctx context.Context, Par
 	return comments, nil
 }
 
-func (cs *CommentPostgresStorage) GetCommentsByPostID(ctx context.Context, postID int64, limit *int64, offset *int64) ([]models.Comment, error) {
+func (cs *CommentPostgresStorage) GetCommentsByPostID(ctx context.Context, postID int64, limit *int32, offset *int32) ([]models.Comment, error) {
 	const op = "storage.postgres.comment.GetCommentsByPostID"
 
 	var rows *sql.Rows

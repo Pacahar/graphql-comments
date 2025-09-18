@@ -6,10 +6,14 @@ import (
 	"log/slog"
 	"strconv"
 	"time"
+
+	"github.com/Pacahar/graphql-comments/internal/graphql/generated"
 )
 
+type mutationResolver struct{ *Resolver }
+
 // CreatePost is the resolver for the createPost field.
-func (r *mutationResolver) CreatePost(ctx context.Context, title string, content string, commentsDisabled bool) (*Post, error) {
+func (r *mutationResolver) CreatePost(ctx context.Context, title string, content string, commentsDisabled bool) (*generated.Post, error) {
 	id, err := r.Storage.Post.CreatePost(ctx, title, content, commentsDisabled)
 
 	if err != nil {
@@ -28,7 +32,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, title string, content
 
 	// comments, err := r.Storage.Comment.GetCommentsByPostID(ctx, id)
 
-	gqlComments := make([]*Comment, 0)
+	gqlComments := make([]*generated.Comment, 0)
 
 	// Here comments always gonna be empty so we don't need this
 
@@ -49,18 +53,18 @@ func (r *mutationResolver) CreatePost(ctx context.Context, title string, content
 	// 	})
 	// }
 
-	return &Post{
-		strconv.FormatInt(post.ID, 10),
-		post.Title,
-		post.Content,
-		post.CommentsDisabled,
-		post.CreatedAt.Format(time.RFC3339),
-		gqlComments,
+	return &generated.Post{
+		ID:               strconv.FormatInt(post.ID, 10),
+		Title:            post.Title,
+		Content:          post.Content,
+		CommentsDisabled: post.CommentsDisabled,
+		CreatedAt:        post.CreatedAt.Format(time.RFC3339),
+		Comments:         gqlComments,
 	}, nil
 }
 
 // CreateComment is the resolver for the createComment field.
-func (r *mutationResolver) CreateComment(ctx context.Context, postID string, content string, parentID *string) (*Comment, error) {
+func (r *mutationResolver) CreateComment(ctx context.Context, postID string, content string, parentID *string) (*generated.Comment, error) {
 	var pInt64ParentID *int64
 
 	if parentID != nil {
@@ -124,7 +128,7 @@ func (r *mutationResolver) CreateComment(ctx context.Context, postID string, con
 		parentIDCopy = &s
 	}
 
-	return &Comment{
+	return &generated.Comment{
 		ID:        strconv.FormatInt(comment.ID, 10),
 		PostID:    strconv.FormatInt(comment.PostID, 10),
 		ParentID:  parentIDCopy,

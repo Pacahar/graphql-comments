@@ -6,10 +6,14 @@ import (
 	"log/slog"
 	"strconv"
 	"time"
+
+	"github.com/Pacahar/graphql-comments/internal/graphql/generated"
 )
 
+type queryResolver struct{ *Resolver }
+
 // Post is the resolver for the post field.
-func (r *queryResolver) Post(ctx context.Context, id string) (*Post, error) {
+func (r *queryResolver) Post(ctx context.Context, id string) (*generated.Post, error) {
 	intID, err := strconv.ParseInt(id, 10, 64)
 
 	if err != nil {
@@ -31,7 +35,7 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*Post, error) {
 		return nil, fmt.Errorf("failed to fetch comments")
 	}
 
-	gqlComments := make([]*Comment, 0, len(comments))
+	gqlComments := make([]*generated.Comment, 0, len(comments))
 
 	for _, comment := range comments {
 		childComments, err := r.Storage.Comment.GetCommentsByParentID(ctx, comment.ID)
@@ -41,7 +45,7 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*Post, error) {
 			return nil, fmt.Errorf("failed to fetch child comments")
 		}
 
-		gqlReplies := make([]*Comment, 0, len(childComments))
+		gqlReplies := make([]*generated.Comment, 0, len(childComments))
 
 		for _, child := range childComments {
 			var childParentIDCopy *string
@@ -50,13 +54,13 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*Post, error) {
 				childParentIDCopy = &s
 			}
 
-			gqlReplies = append(gqlReplies, &Comment{
-				strconv.FormatInt(child.ID, 10),
-				strconv.FormatInt(child.PostID, 10),
-				childParentIDCopy,
-				child.Content,
-				child.CreatedAt.Format(time.RFC3339),
-				nil,
+			gqlReplies = append(gqlReplies, &generated.Comment{
+				ID:        strconv.FormatInt(child.ID, 10),
+				PostID:    strconv.FormatInt(child.PostID, 10),
+				ParentID:  childParentIDCopy,
+				Content:   child.Content,
+				CreatedAt: child.CreatedAt.Format(time.RFC3339),
+				Replies:   nil,
 			})
 		}
 
@@ -66,28 +70,28 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*Post, error) {
 			parentIDCopy = &s
 		}
 
-		gqlComments = append(gqlComments, &Comment{
-			strconv.FormatInt(comment.ID, 10),
-			strconv.FormatInt(comment.PostID, 10),
-			parentIDCopy,
-			comment.Content,
-			comment.CreatedAt.Format(time.RFC3339),
-			gqlReplies,
+		gqlComments = append(gqlComments, &generated.Comment{
+			ID:        strconv.FormatInt(comment.ID, 10),
+			PostID:    strconv.FormatInt(comment.PostID, 10),
+			ParentID:  parentIDCopy,
+			Content:   comment.Content,
+			CreatedAt: comment.CreatedAt.Format(time.RFC3339),
+			Replies:   gqlReplies,
 		})
 	}
 
-	return &Post{
-		strconv.FormatInt(post.ID, 10),
-		post.Title,
-		post.Content,
-		post.CommentsDisabled,
-		post.CreatedAt.Format(time.RFC3339),
-		gqlComments,
+	return &generated.Post{
+		ID:               strconv.FormatInt(post.ID, 10),
+		Title:            post.Title,
+		Content:          post.Content,
+		CommentsDisabled: post.CommentsDisabled,
+		CreatedAt:        post.CreatedAt.Format(time.RFC3339),
+		Comments:         gqlComments,
 	}, nil
 }
 
 // Posts is the resolver for the posts field.
-func (r *queryResolver) Posts(ctx context.Context, limit *int32, offset *int32) ([]*Post, error) {
+func (r *queryResolver) Posts(ctx context.Context, limit *int32, offset *int32) ([]*generated.Post, error) {
 	posts, err := r.Storage.Post.GetAllPosts(ctx)
 
 	if err != nil {
@@ -95,16 +99,16 @@ func (r *queryResolver) Posts(ctx context.Context, limit *int32, offset *int32) 
 		return nil, fmt.Errorf("failed to fetch posts")
 	}
 
-	gqlPosts := make([]*Post, 0, len(posts))
+	gqlPosts := make([]*generated.Post, 0, len(posts))
 
 	for _, post := range posts {
-		gqlPosts = append(gqlPosts, &Post{
-			strconv.FormatInt(post.ID, 10),
-			post.Title,
-			post.Content,
-			post.CommentsDisabled,
-			post.CreatedAt.Format(time.RFC3339),
-			nil,
+		gqlPosts = append(gqlPosts, &generated.Post{
+			ID:               strconv.FormatInt(post.ID, 10),
+			Title:            post.Title,
+			Content:          post.Content,
+			CommentsDisabled: post.CommentsDisabled,
+			CreatedAt:        post.CreatedAt.Format(time.RFC3339),
+			Comments:         nil,
 		})
 	}
 
@@ -114,7 +118,7 @@ func (r *queryResolver) Posts(ctx context.Context, limit *int32, offset *int32) 
 		start := int(*offset)
 		end := start + int(*limit)
 		if start > len(gqlPosts) {
-			return []*Post{}, nil
+			return []*generated.Post{}, nil
 		}
 		if end > len(gqlPosts) {
 			end = len(gqlPosts)
@@ -126,7 +130,7 @@ func (r *queryResolver) Posts(ctx context.Context, limit *int32, offset *int32) 
 }
 
 // Comment is the resolver for the comment field.
-func (r *queryResolver) Comment(ctx context.Context, id string) (*Comment, error) {
+func (r *queryResolver) Comment(ctx context.Context, id string) (*generated.Comment, error) {
 	intID, err := strconv.ParseInt(id, 10, 64)
 
 	if err != nil {
@@ -148,16 +152,16 @@ func (r *queryResolver) Comment(ctx context.Context, id string) (*Comment, error
 		return nil, fmt.Errorf("failed to fetch child comments")
 	}
 
-	gqlReplies := make([]*Comment, 0, len(childComments))
+	gqlReplies := make([]*generated.Comment, 0, len(childComments))
 
 	for _, child := range childComments {
-		gqlReplies = append(gqlReplies, &Comment{
-			strconv.FormatInt(child.ID, 10),
-			strconv.FormatInt(child.PostID, 10),
-			&id,
-			child.Content,
-			child.CreatedAt.Format(time.RFC3339),
-			nil,
+		gqlReplies = append(gqlReplies, &generated.Comment{
+			ID:        strconv.FormatInt(child.ID, 10),
+			PostID:    strconv.FormatInt(child.PostID, 10),
+			ParentID:  &id,
+			Content:   child.Content,
+			CreatedAt: child.CreatedAt.Format(time.RFC3339),
+			Replies:   nil,
 		})
 	}
 
@@ -167,18 +171,18 @@ func (r *queryResolver) Comment(ctx context.Context, id string) (*Comment, error
 		parentIDCopy = &s
 	}
 
-	return &Comment{
-		strconv.FormatInt(comment.ID, 10),
-		strconv.FormatInt(comment.PostID, 10),
-		parentIDCopy,
-		comment.Content,
-		comment.CreatedAt.Format(time.RFC3339),
-		gqlReplies,
+	return &generated.Comment{
+		ID:        strconv.FormatInt(comment.ID, 10),
+		PostID:    strconv.FormatInt(comment.PostID, 10),
+		ParentID:  parentIDCopy,
+		Content:   comment.Content,
+		CreatedAt: comment.CreatedAt.Format(time.RFC3339),
+		Replies:   gqlReplies,
 	}, nil
 }
 
 // Comments is the resolver for the comments field.
-func (r *queryResolver) Comments(ctx context.Context, postID string, limit *int64, offset *int64) ([]*Comment, error) {
+func (r *queryResolver) Comments(ctx context.Context, postID string, limit *int32, offset *int32) ([]*generated.Comment, error) {
 	intPostID, err := strconv.ParseInt(postID, 10, 64)
 
 	if err != nil {
@@ -193,7 +197,7 @@ func (r *queryResolver) Comments(ctx context.Context, postID string, limit *int6
 		return nil, fmt.Errorf("failed to fetch comments")
 	}
 
-	gqlComments := make([]*Comment, 0, len(comments))
+	gqlComments := make([]*generated.Comment, 0, len(comments))
 
 	for _, comment := range comments {
 		childComments, err := r.Storage.Comment.GetCommentsByParentID(ctx, comment.ID)
@@ -203,7 +207,7 @@ func (r *queryResolver) Comments(ctx context.Context, postID string, limit *int6
 			return nil, fmt.Errorf("failed to fetch child comments")
 		}
 
-		gqlChildComments := make([]*Comment, 0, len(childComments))
+		gqlChildComments := make([]*generated.Comment, 0, len(childComments))
 
 		for _, child := range childComments {
 			var childParentIDCopy *string
@@ -212,13 +216,13 @@ func (r *queryResolver) Comments(ctx context.Context, postID string, limit *int6
 				childParentIDCopy = &s
 			}
 
-			gqlChildComments = append(gqlChildComments, &Comment{
-				strconv.FormatInt(child.ID, 10),
-				strconv.FormatInt(child.PostID, 10),
-				childParentIDCopy,
-				child.Content,
-				child.CreatedAt.Format(time.RFC3339),
-				nil,
+			gqlChildComments = append(gqlChildComments, &generated.Comment{
+				ID:        strconv.FormatInt(child.ID, 10),
+				PostID:    strconv.FormatInt(child.PostID, 10),
+				ParentID:  childParentIDCopy,
+				Content:   child.Content,
+				CreatedAt: child.CreatedAt.Format(time.RFC3339),
+				Replies:   nil,
 			})
 		}
 
@@ -228,13 +232,13 @@ func (r *queryResolver) Comments(ctx context.Context, postID string, limit *int6
 			parentIDCopy = &s
 		}
 
-		gqlComments = append(gqlComments, &Comment{
-			strconv.FormatInt(comment.ID, 10),
-			strconv.FormatInt(comment.PostID, 10),
-			parentIDCopy,
-			comment.Content,
-			comment.CreatedAt.Format(time.RFC3339),
-			gqlChildComments,
+		gqlComments = append(gqlComments, &generated.Comment{
+			ID:        strconv.FormatInt(comment.ID, 10),
+			PostID:    strconv.FormatInt(comment.PostID, 10),
+			ParentID:  parentIDCopy,
+			Content:   comment.Content,
+			CreatedAt: comment.CreatedAt.Format(time.RFC3339),
+			Replies:   gqlChildComments,
 		})
 	}
 
