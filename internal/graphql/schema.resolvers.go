@@ -35,7 +35,7 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*Post, error) {
 }
 
 // Posts is the resolver for the posts field.
-func (r *queryResolver) Posts(ctx context.Context) ([]*Post, error) {
+func (r *queryResolver) Posts(ctx context.Context, limit *int32, offset *int32) ([]*Post, error) {
 	panic(fmt.Errorf("not implemented: Posts - posts"))
 }
 
@@ -45,7 +45,7 @@ func (r *queryResolver) Comment(ctx context.Context, id string) (*Comment, error
 }
 
 // Comments is the resolver for the comments field.
-func (r *queryResolver) Comments(ctx context.Context, postID string) ([]*Comment, error) {
+func (r *queryResolver) Comments(ctx context.Context, postID string, limit *int32, offset *int32) ([]*Comment, error) {
 	panic(fmt.Errorf("not implemented: Comments - comments"))
 }
 
