@@ -89,6 +89,48 @@ func (cs *CommentPostgresStorage) GetCommentByID(ctx context.Context, id int64) 
 	return comment, nil
 }
 
+func (cs *CommentPostgresStorage) GetCommentsByParentID(ctx context.Context, ParentID int64) ([]models.Comment, error) {
+	const op = "storage.postgres.comment.GetCommentsByParentID"
+
+	rows, err := cs.db.QueryContext(ctx, `
+		SELECT id, post_id, parent_id, content, created_at
+		FROM comment
+		WHERE parent_id = $1
+		ORDER BY created_at ASC`,
+		ParentID,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	defer rows.Close()
+
+	comments := make([]models.Comment, 0)
+
+	for rows.Next() {
+		var comment models.Comment
+		err := rows.Scan(
+			&comment.ID,
+			&comment.PostID,
+			&comment.ParentID,
+			&comment.Content,
+			&comment.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+
+		comments = append(comments, comment)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("%s: iteration failed: %w", op, err)
+	}
+
+	return comments, nil
+}
+
 func (cs *CommentPostgresStorage) GetCommentsByPostID(ctx context.Context, postID int64, limit *int64, offset *int64) ([]models.Comment, error) {
 	const op = "storage.postgres.comment.GetCommentsByPostID"
 
@@ -100,16 +142,18 @@ func (cs *CommentPostgresStorage) GetCommentsByPostID(ctx context.Context, postI
 		SELECT id, post_id, parent_id, content, created_at
 		FROM comment
 		WHERE post_id = $1
+		AND parent_oid = NULL
 		ORDER BY created_at ASC
-		LIMIT $1
-		OFFSET $2
-	`, limit, offset)
+		LIMIT $2
+		OFFSET $3
+	`, postID, *limit, *offset)
 	} else {
 		rows, err = cs.db.QueryContext(ctx, `
 		SELECT id, post_id, parent_id, content, created_at
 		FROM comment
 		WHERE post_id = $1
-		ORDER BY created_at ASC`)
+		AND parent_oid = NULL
+		ORDER BY created_at ASC`, postID)
 	}
 
 	defer rows.Close()
