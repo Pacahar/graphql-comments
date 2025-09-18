@@ -41,21 +41,22 @@ func NewPostgresCommentStorage(db *sql.DB) (*CommentPostgresStorage, error) {
 	return &CommentPostgresStorage{db: db}, nil
 }
 
-func (cs *CommentPostgresStorage) CreateComment(ctx context.Context, content string, postID int64, parentID *int64) error {
+func (cs *CommentPostgresStorage) CreateComment(ctx context.Context, content string, postID int64, parentID *int64) (int64, error) {
 	const op = "storage.postgres.comment.CreateComment"
 
-	var err error
-
-	_, err = cs.db.ExecContext(ctx, `
-		INSERT INTO comment(content, post_id, parent_id)
-		VALUES($1, $2, $3)
-	`, content, postID, *parentID)
+	var id int64
+	err := cs.db.QueryRowContext(ctx, `
+		INSERT INTO comment (content, post_id, parent_id)
+		VALUES ($1, $2, $3)
+		RETURNING id`,
+		content, postID, parentID,
+	).Scan(&id)
 
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return nil
+	return id, nil
 }
 
 func (cs *CommentPostgresStorage) GetCommentByID(ctx context.Context, id int64) (models.Comment, error) {

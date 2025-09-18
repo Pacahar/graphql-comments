@@ -12,14 +12,14 @@ type Storage struct {
 }
 
 type PostStorage interface {
-	CreatePost(ctx context.Context, title, content string, commentsDisabled bool) error
+	CreatePost(ctx context.Context, title, content string, commentsDisabled bool) (int64, error)
 	GetPostByID(ctx context.Context, id int64) (models.Post, error)
 	GetAllPosts(ctx context.Context) ([]models.Post, error)
 	DeletePost(ctx context.Context, id int64) error
 }
 
 type CommentStorage interface {
-	CreateComment(ctx context.Context, content string, postID int64, parentID *int64) error
+	CreateComment(ctx context.Context, content string, postID int64, parentID *int64) (int64, error)
 	GetCommentByID(ctx context.Context, id int64) (models.Comment, error)
 	GetCommentsByPostID(ctx context.Context, postID int64) ([]models.Comment, error)
 	DeleteComment(ctx context.Context, id int64) error

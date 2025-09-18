@@ -15,9 +15,11 @@ type CommentMemoryStorage struct {
 	currentID int64
 }
 
-func (cs *CommentMemoryStorage) CreateComment(ctx context.Context, content string, postID int64, parentID *int64) error {
+func (cs *CommentMemoryStorage) CreateComment(ctx context.Context, content string, postID int64, parentID *int64) (int64, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
+
+	id := cs.currentID
 
 	var safeParentID *int64
 	if parentID != nil {
@@ -25,8 +27,8 @@ func (cs *CommentMemoryStorage) CreateComment(ctx context.Context, content strin
 		safeParentID = &val
 	}
 
-	cs.comments[cs.currentID] = models.Comment{
-		ID:        cs.currentID,
+	cs.comments[id] = models.Comment{
+		ID:        id,
 		PostID:    postID,
 		ParentID:  safeParentID,
 		Content:   content,
@@ -35,7 +37,7 @@ func (cs *CommentMemoryStorage) CreateComment(ctx context.Context, content strin
 
 	cs.currentID++
 
-	return nil
+	return id, nil
 }
 
 func (cs *CommentMemoryStorage) GetCommentByID(ctx context.Context, id int64) (models.Comment, error) {

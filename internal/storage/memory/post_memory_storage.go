@@ -15,12 +15,14 @@ type PostMemoryStorage struct {
 	currentID int64
 }
 
-func (ps *PostMemoryStorage) CreatePost(ctx context.Context, title, content string, commentsDisabled bool) error {
+func (ps *PostMemoryStorage) CreatePost(ctx context.Context, title, content string, commentsDisabled bool) (int64, error) {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
-	ps.posts[ps.currentID] = models.Post{
-		ID:               ps.currentID,
+	id := ps.currentID
+
+	ps.posts[id] = models.Post{
+		ID:               id,
 		Title:            title,
 		Content:          content,
 		CommentsDisabled: commentsDisabled,
@@ -29,7 +31,7 @@ func (ps *PostMemoryStorage) CreatePost(ctx context.Context, title, content stri
 
 	ps.currentID++
 
-	return nil
+	return id, nil
 }
 
 func (ps *PostMemoryStorage) GetPostByID(ctx context.Context, id int64) (models.Post, error) {

@@ -35,22 +35,22 @@ func NewPostgresPostStorage(db *sql.DB) (*PostPostgresStorage, error) {
 	return &PostPostgresStorage{db: db}, nil
 }
 
-func (ps *PostPostgresStorage) CreatePost(ctx context.Context, title, content string, commentsDisabled bool) error {
+func (ps *PostPostgresStorage) CreatePost(ctx context.Context, title, content string, commentsDisabled bool) (int64, error) {
 	const op = "storage.postgres.post.CreatePost"
 
-	_, err := ps.db.ExecContext(ctx, `
-		INSERT INTO post(title, content, comments_disabled)
-		VALUES($1, $2, $3)`,
-		title,
-		content,
-		commentsDisabled,
-	)
+	var id int64
+	err := ps.db.QueryRowContext(ctx, `
+		INSERT INTO post (title, content, comments_disabled)
+		VALUES ($1, $2, $3)
+		RETURNING id`,
+		title, content, commentsDisabled,
+	).Scan(&id)
 
 	if err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	return nil
+	return id, nil
 }
 
 func (ps *PostPostgresStorage) GetPostByID(ctx context.Context, id int64) (models.Post, error) {
