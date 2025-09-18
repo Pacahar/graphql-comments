@@ -102,7 +102,7 @@ func (r *mutationResolver) CreateComment(ctx context.Context, postID string, con
 	}
 
 	if post.CommentsDisabled {
-		r.Logger.Error("comments disabled on this post", slog.String("err", err.Error()))
+		r.Logger.Error("comments disabled on this post")
 		return nil, fmt.Errorf("comments disabled on this post")
 	}
 
