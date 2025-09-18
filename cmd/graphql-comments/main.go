@@ -21,7 +21,7 @@ func main() {
 	log.Info("Starting service", slog.String("env", cfg.Environment))
 	log.Debug("Debug messages enabled")
 
-	storage, err := setupStorage(&cfg.Storage)
+	_, err := setupStorage(&cfg.Storage)
 
 	if err != nil {
 		log.Error("failed to setup storage", slog.Any("error", err))
@@ -29,7 +29,7 @@ func main() {
 	}
 
 	log.Info("storage set", slog.String("storage type", cfg.Storage.Type))
-
+	// TODO: ALL THE REST
 }
 
 func setupLogger(env string) *slog.Logger {
