@@ -43,6 +43,19 @@ func (ps *PostMemoryStorage) GetPostByID(ctx context.Context, id int64) (models.
 	return post, nil
 }
 
+func (ps *PostMemoryStorage) GetAllPosts(ctx context.Context) ([]models.Post, error) {
+	ps.mu.RLock()
+	defer ps.mu.RUnlock()
+
+	posts := make([]models.Post, 0, len(ps.posts))
+
+	for _, post := range ps.posts {
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}
+
 func (ps *PostMemoryStorage) DeletePost(ctx context.Context, id int64) error {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()

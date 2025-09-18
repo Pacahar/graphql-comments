@@ -83,6 +83,47 @@ func (ps *PostPostgresStorage) GetPostByID(ctx context.Context, id int64) (model
 	return post, nil
 }
 
+func (ps *PostPostgresStorage) GetAllPosts(ctx context.Context) ([]models.Post, error) {
+	const op = "storage.postgres.post.GetAllPosts"
+
+	posts := make([]models.Post, 0)
+
+	rows, err := ps.db.QueryContext(ctx, `
+		SELECT id, title, content, comments_disabled, created_at
+		FROM post
+		ORDER BY created_at ASC`,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var post models.Post
+		err := rows.Scan(
+			&post.ID,
+			&post.Title,
+			&post.Content,
+			&post.CommentsDisabled,
+			&post.CreatedAt,
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+
+		posts = append(posts, post)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("%s: iteration failed: %w", op, err)
+	}
+
+	return posts, nil
+}
+
 func (ps *PostPostgresStorage) DeletePost(ctx context.Context, id int64) error {
 	const op = "storage.postgres.post.DeletePost"
 

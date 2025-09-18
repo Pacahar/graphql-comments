@@ -14,6 +14,7 @@ type Storage struct {
 type PostStorage interface {
 	CreatePost(ctx context.Context, title, content string, commentsDisabled bool) error
 	GetPostByID(ctx context.Context, id int64) (models.Post, error)
+	GetAllPosts(ctx context.Context) ([]models.Post, error)
 	DeletePost(ctx context.Context, id int64) error
 }
 
