@@ -142,7 +142,7 @@ func (cs *CommentPostgresStorage) GetCommentsByPostID(ctx context.Context, postI
 		SELECT id, post_id, parent_id, content, created_at
 		FROM comment
 		WHERE post_id = $1
-		AND parent_oid = NULL
+		AND parent_id IS NULL
 		ORDER BY created_at ASC
 		LIMIT $2
 		OFFSET $3
@@ -152,15 +152,15 @@ func (cs *CommentPostgresStorage) GetCommentsByPostID(ctx context.Context, postI
 		SELECT id, post_id, parent_id, content, created_at
 		FROM comment
 		WHERE post_id = $1
-		AND parent_oid = NULL
+		AND parent_id IS NULL
 		ORDER BY created_at ASC`, postID)
 	}
-
-	defer rows.Close()
 
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
+
+	defer rows.Close()
 
 	comments := make([]models.Comment, 0)
 

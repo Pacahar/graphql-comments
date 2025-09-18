@@ -81,7 +81,7 @@ func (cs *CommentMemoryStorage) GetCommentsByParentID(ctx context.Context, Paren
 	filtered := make([]models.Comment, 0)
 
 	for _, comment := range cs.comments {
-		if *comment.ParentID == ParentID {
+		if comment.ParentID != nil && *comment.ParentID == ParentID {
 			var parentID *int64
 			if comment.ParentID != nil {
 				val := *comment.ParentID
